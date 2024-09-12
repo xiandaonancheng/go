@@ -2427,6 +2427,11 @@ func (p *parser) parseStmt() (s ast.Stmt) {
 	switch p.tok {
 	case token.CONST, token.TYPE, token.VAR:
 		s = &ast.DeclStmt{Decl: p.parseDecl(stmtStart)}
+	case token.GOLOCAL:
+		// GoLocal stmt has the same syntax with Var stmt
+		// so we can return VAR to check syntax
+		p.tok = token.VAR
+		s = &ast.DeclStmt{Decl: p.parseDecl(stmtStart)}
 	case
 		// tokens that may start an expression
 		token.IDENT, token.INT, token.FLOAT, token.IMAG, token.CHAR, token.STRING, token.FUNC, token.LPAREN, // operands

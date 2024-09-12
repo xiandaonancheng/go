@@ -122,6 +122,7 @@ const (
 	STRUCT
 	SWITCH
 	TYPE
+	GOLOCAL
 	VAR
 	keyword_end
 
@@ -224,11 +225,12 @@ var tokens = [...]string{
 	RANGE:     "range",
 	RETURN:    "return",
 
-	SELECT: "select",
-	STRUCT: "struct",
-	SWITCH: "switch",
-	TYPE:   "type",
-	VAR:    "var",
+	SELECT:  "select",
+	STRUCT:  "struct",
+	SWITCH:  "switch",
+	TYPE:    "type",
+	GOLOCAL: "go_local",
+	VAR:     "var",
 
 	TILDE: "~",
 }
