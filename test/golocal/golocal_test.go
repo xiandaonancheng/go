@@ -1,7 +1,6 @@
 package main
 
 import (
-	a "github.com/golang/go/test/typeparam/issue47892b.dir"
 	"runtime"
 	"sync"
 	"testing"

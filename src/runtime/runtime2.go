@@ -504,7 +504,8 @@ type g struct {
 	gcAssistBytes int64
 
 	// localTable records GoLocal variables in this goroutine
-	localTable map[any]unsafe.Pointer
+	localTable    map[any]unsafe.Pointer
+	localTableSSA map[string]unsafe.Pointer
 }
 
 // gTrackingPeriod is the number of transitions out of _Grunning between

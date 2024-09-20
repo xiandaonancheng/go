@@ -11,10 +11,9 @@ type GoLocalHolder[T any] struct {
 
 type _InnerGoLocalKey[T any] struct {
 	rawKey any
-	v0     *T
 }
 
-// newGoLocalObject creates a go_local object and record it.
+// newGoLocalObject creates a go local object and record it.
 func newGoLocalObject(key any, typ *_type) (pObject unsafe.Pointer, alloc bool) {
 	gp := getg()
 	ptr, ok := gp.localTable[key]
@@ -29,15 +28,25 @@ func newGoLocalObject(key any, typ *_type) (pObject unsafe.Pointer, alloc bool) 
 	return ptr, true
 }
 
-// newGoLocalObjectForStringKey wraps newGoLocalObject for ssa calling.
-func newGoLocalObjectForStringKey(key string, typ *_type) (pObject unsafe.Pointer, alloc bool) {
-	return newGoLocalObject(key, typ)
+// newGoLocalObjectSSA implements "go_local" keyword ssa calling.
+func newGoLocalObjectSSA(key string, typ *_type) (pObject unsafe.Pointer, alloc bool) {
+	gp := getg()
+	ptr, ok := gp.localTableSSA[key]
+	if ok {
+		return ptr, false
+	}
+	if gp.localTableSSA == nil {
+		gp.localTableSSA = map[string]unsafe.Pointer{}
+	}
+	ptr = mallocgc(typ.Size_, typ, true)
+	gp.localTableSSA[key] = ptr
+	return ptr, true
 }
 
 // NewGoLocal creates a go local object for rawKey + type and returns its holder.
 // This can use the same one object in multiple places by the same rawKey + type
 func NewGoLocal[T any](rawKey any, initFunc func() T) (ptrHolder *GoLocalHolder[T], alloc bool) {
-	key := _InnerGoLocalKey[T]{rawKey: rawKey, v0: nil}
+	key := _InnerGoLocalKey[T]{rawKey: rawKey}
 	wrapper0 := (*GoLocalHolder[T])(nil)
 	ptr, alloc := newGoLocalObject(key, abi.TypeOf(wrapper0).Elem())
 	ptrHolder = (*GoLocalHolder[T])(ptr)

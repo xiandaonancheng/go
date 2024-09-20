@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/golang/go/test/golocal/local"
 	"runtime"
 	"time"
 )
@@ -13,6 +14,9 @@ func main() {
 	time.Sleep(time.Second)
 	go callGoLocal(3)
 	time.Sleep(time.Second)
+	callGoLocal(4)
+	time.Sleep(time.Second)
+	local.GoLocalA()
 }
 
 func callGoLocal(callID int) {
@@ -34,7 +38,7 @@ func callGoLocal(callID int) {
 }
 
 func goLocal() {
-	var a int
+	go_local a int
 	a++
 	fmt.Println("goLocal:", a)
 }

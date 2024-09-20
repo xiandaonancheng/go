@@ -131,9 +131,8 @@ func InitConfig() {
 	ir.Syms.Asanread = typecheck.LookupRuntimeFunc("asanread")
 	ir.Syms.Asanwrite = typecheck.LookupRuntimeFunc("asanwrite")
 	ir.Syms.Newobject = typecheck.LookupRuntimeFunc("newobject")
-	ir.Syms.NewGoLocalObject = typecheck.LookupRuntimeFunc("newGoLocalObject")
-	ir.Syms.NewGoLocalObjectForStringKey =
-		typecheck.LookupRuntimeFunc("newGoLocalObjectForStringKey")
+	ir.Syms.NewGoLocalObjectSSA =
+		typecheck.LookupRuntimeFunc("newGoLocalObjectSSA")
 	ir.Syms.Newproc = typecheck.LookupRuntimeFunc("newproc")
 	ir.Syms.Panicdivide = typecheck.LookupRuntimeFunc("panicdivide")
 	ir.Syms.PanicdottypeE = typecheck.LookupRuntimeFunc("panicdottypeE")
@@ -696,10 +695,14 @@ func (s *state) paramsToHeap() {
 
 // newGoLocal gets heap memory for n and the flag indicating if alloc new mem.
 func (s *state) newGoLocal(n *ir.Name) {
-	// We use variable name + pos as the unique key
-	key := n.Sym().Name + "@" + src.FmtGoLocalKey(n.Pos())
+	// We use variable name + pos + build id as the unique key
+	buildID := base.Flag.BuildID
+	if idx := strings.Index(base.Flag.BuildID, "/"); idx > 0 {
+		buildID = buildID[:idx]
+	}
+	key := n.Sym().Name + "@" + src.FmtGoLocalKey(n.Pos()) + "@" + buildID
 	ssaGoLocal, ssaAlloc := s.newGoLocalObject(key, n.Type(), nil)
-	goLocalAllocMap[n] = ssaAlloc
+	setGoLocalAlloc(n, ssaAlloc)
 	s.setHeapaddr(n.Pos(), n, ssaGoLocal)
 }
 
@@ -710,7 +713,7 @@ func (s *state) newGoLocalAlloc(n *ir.Name) {
 	if goLocal == nil {
 		base.FatalfAt(n.Pos(), "cannot find go local variable for %v", n)
 	}
-	ssaAlloc := goLocalAllocMap[goLocal]
+	ssaAlloc := getGoLocalAlloc(goLocal)
 	if ssaAlloc == nil {
 		base.FatalfAt(n.Pos(), "go local variable %v not decl", goLocal)
 	}
@@ -763,7 +766,7 @@ func (s *state) newGoLocalObject(key string, typ *types.Type, rtype *ssa.Value) 
 		rtype = s.reflectType(typ)
 	}
 	ssaKey := s.entryNewValue1A(ssa.OpConstString, types.Types[types.TSTRING], ssa.StringToAux(key), s.sb)
-	values := s.rtcall(ir.Syms.NewGoLocalObjectForStringKey, true,
+	values := s.rtcall(ir.Syms.NewGoLocalObjectSSA, true,
 		[]*types.Type{types.NewPtr(typ), types.Types[types.TBOOL]}, ssaKey, rtype)
 	return values[0], values[1]
 }
